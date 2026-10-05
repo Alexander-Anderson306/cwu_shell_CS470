@@ -1,7 +1,14 @@
 #ifndef CWU_SHELL
 #define CWU_SHELL
-int prompt(char* new_prompt);
+typedef enum {
+	EXITC,
+	PROMPTC,
+	CPUINFOC,
+	MEMINFOC,
+	SYSTEMC
+} Command;
+Command input_map(char* input);
+int prompt(int argc, char** argv);
 int cpuinfo(int argc, char** argv);
 int meminfo(int argc, char** argv);
-int external_command(char* command);
 #endif
