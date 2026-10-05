@@ -81,6 +81,14 @@ int main() {
 				break;
 			case CPUINFOC:
 				cpuinfo(arg_count, parsed_input);
+				break;
+			case CDC:
+				if(parsed_input[1] == NULL) {
+					chdir("$HOME");
+				} else if((ret_var = chdir(parsed_input[2])) == -1) {
+					fprintf(stderr, "ERROR: Target directory does not exist\n");
+				}
+				break;
 			case SYSTEMC:
 				if(shell_flag) {
 					ret_var = system(input_copy);
@@ -115,6 +123,7 @@ Command input_map(char* input) {
 	if(strcmp(input, "prompt") == 0) return PROMPTC;
 	if(strcmp(input, "cpuinfo") == 0) return CPUINFOC;
 	if(strcmp(input, "meminfo") == 0) return CPUINFOC;
+	if(strcmp(input, "cd") == 0) return CDC;
 
 	//if we cant match the command, pass it to system and let the native shell handle it
 	return SYSTEMC;

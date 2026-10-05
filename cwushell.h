@@ -5,6 +5,7 @@ typedef enum {
 	PROMPTC,
 	CPUINFOC,
 	MEMINFOC,
+	CDC,
 	SYSTEMC
 } Command;
 Command input_map(char* input);
