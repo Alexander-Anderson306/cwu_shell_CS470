@@ -30,7 +30,9 @@ int main() {
 	char* input_buff = malloc(INPUT_BUFFER * sizeof(char));
 	input_buff[INPUT_BUFFER-1] = '\0';
 	const char* ex = "exit";
-	char* exit_ptr;
+	//avoid assignment warning by having ret_tok point to input_buff real assignment done in do while loop
+	char* ret_tok = input_buff; 
+	char* command;
 	//loop exits when user enters exit command
 	do{
 		//reset input buffer
@@ -43,12 +45,12 @@ int main() {
 			fprintf(stderr, "ERROR: input buffer overflow, cwushell cannot handle inputs larger that %d bytes\n", INPUT_BUFFER);
 			continue;
 		}
+		input_buff[INPUT_BUFFER-1] = '\0';
 		
 		//combe through input
-		arg_count = 0;
 		char* tok = strtok(input_buff, DELIMITERS);
 		while(tok != NULL && arg_count < MAX_ARGS-1) {
-			parsed_input[arg_count++];
+			parsed_input[arg_count++] = tok;
 			tok = strtok(NULL, DELIMITERS);
 		}
 
@@ -58,29 +60,28 @@ int main() {
 			ret_var = -1;
 			continue;
 		}
+
+		//command is always first token
+		//in the case the command is exit, the second token should be the exit number
+		command = parsed_input[0];
+		ret_tok = parsed_input[1];
 		
 		//get the command being exicuted
 		//pass command to info
 		ret_var = external_command(input_buff);
-	} while((exit_ptr = strstr(input_buff, ex)) == NULL);
+	} while(strcmp(command, ex)); //loop exits when exit command is entered
 
-	//check if exit command was followed by a number
-	int exit_index = (exit_ptr - input_buff) + strlen(ex); //nifty pointer arithmatic
-	if(exit_index < INPUT_BUFFER-2 && input_buff[exit_index] == '-' || (input_buff[exit_index] >= '0' && input_buff[exit_index] <= '9')) {
-		//get exit number we're recycling space from input_buff here
-		int count = 0;
-		input_buff[count++] = input_buff[exit_index++]; //handles negative exit code
-		if(input_buff[exit_index] >= '0' && input_buff[exit_index] <= '9') {
-			while(exit_index < INPUT_BUFFER-2 && input_buff[exit_index] >= '0' && input_buff[exit_index] <= '9') {
-				input_buff[count++] = input_buff[exit_index++];
-			}
-			//mark last space with \0 so atoi works
-			input_buff[count] = '\0';
-			ret_var = atoi(input_buff);
-		}
+	//handle edge cases with the return value
+	int temp = 0;
+	if(ret_tok != NULL) {
+		temp = atoi(ret_tok);
 	}
-	
 
+	if(temp != 0) {
+		ret_var = temp;
+	} else if(ret_tok != NULL && ret_tok[0] == '0') {
+		ret_var = 0;
+	}
 
 	free(input_buff);
 	return ret_var;
