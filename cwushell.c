@@ -36,11 +36,12 @@ int main() {
 		getcwd(current_path, sizeof(current_path));
 		//reset input buffer
 		memset(input_buff, 0, INPUT_BUFFER_SIZE * sizeof(char));
+		arg_count = 0;
 		printf("%s (%s)> ",current_path, current_prompt);
 		fgets(input_buff, INPUT_BUFFER_SIZE, stdin);
 		//check if input fits in buffer
 		if(input_buff[INPUT_BUFFER_SIZE-1] != '\0') {
-			ret_var = -1;
+			ret_var = 2;
 			fprintf(stderr, "ERROR: input buffer overflow, cwushell cannot handle inputs larger that %d bytes\n", INPUT_BUFFER_SIZE);
 			continue;
 		}
@@ -59,7 +60,7 @@ int main() {
 		//check for too many arguments error
 		if(arg_count >= MAX_ARGS-1){
 			fprintf(stderr, "ERROR: argument bufer overflow, cwushell cannot handle more than %d arguments", MAX_ARGS-1);
-			ret_var = -1;
+			ret_var = 3;
 			continue;
 		}
 
@@ -129,6 +130,40 @@ Command input_map(char* input) {
 	return SYSTEMC;
 }
 int prompt(int argc, char** argv){
+	if(argc > 2) {
+		printf("ERROR: Too many arguments\nExpected input form: prompt [new_prompt]\n");
+		return 1;
+	}
+
+	if(argc == 1) {
+		strcpy(current_prompt, "cwushell");
+		return 0;
+	}
+
+
+	if(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+		//did not feel like typing this so i generated this text with AI.
+		printf(
+		    "Usage: prompt [new_prompt]\n"
+		    "       prompt [OPTION]\n"
+		    "\n"
+		    "Change the current shell prompt.\n"
+		    "\n"
+		    "If new_prompt is provided, the shell prompt is changed to new_prompt.\n"
+		    "If no new_prompt is provided, the prompt is reset to the default\n"
+		    "prompt \"cwushell>\".\n"
+		    "\n"
+		    "Options:\n"
+		    "  -h, --help    Display this help message and exit.\n"
+		    "\n"
+		    "Examples:\n"
+		    "  prompt mysh>      Change the prompt to \"mysh>\"\n"
+		    "  prompt            Restore the default prompt \"cwushell>\"\n"
+		    "  prompt --help     Display this help message\n"
+		);
+	} else {
+		strcpy(current_prompt, argv[1]);
+	}
 	return 0;
 }
 
