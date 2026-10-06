@@ -12,6 +12,7 @@
 
 char current_path[PATH_BUFFER];
 char current_prompt[PATH_BUFFER];
+char command_path[PATH_BUFFER];
 int main() {
 	//check if there is a shell avaliable for use on this system
 	int ret_var = 0;
@@ -28,6 +29,7 @@ int main() {
 	//avoid assignment warning by having ret_tok point to input_buff real assignment done in do while loop
 	char* ret_tok = input_buff; 
 	Command command;
+	pid_t pid;
 
 	//setting current path and prompt
 	//loop exits when user enters exit command
@@ -64,6 +66,8 @@ int main() {
 			continue;
 		}
 
+		parsed_input[arg_count] = NULL;
+
 		//command is always the first token
 		command = input_map(parsed_input[0]);
 		
@@ -78,10 +82,39 @@ int main() {
 				prompt(arg_count, parsed_input);
 				break;
 			case MEMINFOC:
-				meminfo(arg_count, parsed_input);
 				break;
 			case CPUINFOC:
-				cpuinfo(arg_count, parsed_input);
+				//fork and exec and run cpuinfo bin
+				
+				pid = fork();
+
+				if(pid < 0) {
+					//the fork failed
+					fprintf(stderr, "ERROR: fork failed, process limit for cwushell reached see manual page of ulimit for a solution\n");
+					ret_var = 4;
+				} else if(pid == 0) {
+					//child process
+					//ai helped with figuring out the path stuff
+					int len = snprintf(command_path, PATH_BUFFER, "%s/cwushell/bin/cpuinfo", getenv("HOME"));
+
+					if(len >= PATH_BUFFER) {
+						fprintf(stderr, "ERROR: File path too large. Size limit by default is is 512 bytes\n");
+						ret_var = 6;
+						break;
+					}
+
+					execv(command_path, parsed_input);
+					//if exec fails then this code will be reached and an error message will be printed
+					fprintf(stderr, "ERROR: exec failed\n");
+					ret_var = 5;
+				} else {
+					//pause parent while child is executing command. I am a lazy programmer so i am not going to worry about & input
+					int w;
+					wait(&w);
+					if(!WIFEXITED(w)) {
+						fprintf(stderr, "ERROR: fork/exec terminated abnormally\n");
+					}
+				}
 				break;
 			case CDC:
 				if(parsed_input[1] == NULL) {
@@ -96,7 +129,7 @@ int main() {
 					break;
 				}
 				//fork and exec to create a new process to run the system command
-				pid_t pid = fork();
+				pid = fork();
 
 				if(pid < 0) {
 					//the fork failed
@@ -187,10 +220,4 @@ int prompt(int argc, char** argv){
 	return 0;
 }
 
-int cpuinfo(int argc, char** argv){
-	return 0;
-}
 
-int meminfo(int argc, char** argv){
-	return 0;
-}

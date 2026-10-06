@@ -10,6 +10,10 @@ int main(int argc, char** argv) {
 	char unknown_flag = 0;
 	int opt;
 
+	if(argc == 1) {
+		fprintf(stderr, "ERROR: No option entered\nExpected format cpuinfo [-c | -t | -n | -h]\n");
+		return 2;
+	}
 
 	while ((opt = getopt(argc, argv, "ctnh")) != -1) {
         	switch (opt) {

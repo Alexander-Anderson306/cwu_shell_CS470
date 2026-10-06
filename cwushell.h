@@ -10,6 +10,4 @@ typedef enum {
 } Command;
 Command input_map(char* input);
 int prompt(int argc, char** argv);
-int cpuinfo(int argc, char** argv);
-int meminfo(int argc, char** argv);
 #endif
