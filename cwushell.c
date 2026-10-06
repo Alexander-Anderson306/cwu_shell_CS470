@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #define INPUT_BUFFER_SIZE 1024 * 4
 #define PATH_BUFFER 512
 #define DELIMITERS " \t\r\n"
@@ -11,7 +12,6 @@
 
 char current_path[PATH_BUFFER];
 char current_prompt[PATH_BUFFER];
-char* parsed_input[MAX_ARGS];
 int main() {
 	//check if there is a shell avaliable for use on this system
 	int ret_var = 0;
@@ -23,8 +23,8 @@ int main() {
 		shell_flag = 0;
 	}
 	char* input_buff = malloc(INPUT_BUFFER_SIZE * sizeof(char));
-	char* input_copy = malloc(INPUT_BUFFER_SIZE * sizeof(char));
 	input_buff[INPUT_BUFFER_SIZE-1] = '\0';
+	char* parsed_input[MAX_ARGS];
 	//avoid assignment warning by having ret_tok point to input_buff real assignment done in do while loop
 	char* ret_tok = input_buff; 
 	Command command;
@@ -36,6 +36,8 @@ int main() {
 		getcwd(current_path, sizeof(current_path));
 		//reset input buffer
 		memset(input_buff, 0, INPUT_BUFFER_SIZE * sizeof(char));
+		//reset parsed input
+		memset(parsed_input, 0, MAX_ARGS);
 		arg_count = 0;
 		printf("%s (%s)> ",current_path, current_prompt);
 		fgets(input_buff, INPUT_BUFFER_SIZE, stdin);
@@ -46,8 +48,6 @@ int main() {
 			continue;
 		}
 		input_buff[INPUT_BUFFER_SIZE-1] = '\0';
-		//deep copy of input since strtok is not memory safe (or whatever the term is)
-		strcpy(input_copy, input_buff);
 
 		
 		//combe through input
@@ -86,15 +86,35 @@ int main() {
 			case CDC:
 				if(parsed_input[1] == NULL) {
 					chdir("$HOME");
-				} else if((ret_var = chdir(parsed_input[2])) == -1) {
+				} else if((ret_var = chdir(parsed_input[1])) == -1) {
 					fprintf(stderr, "ERROR: Target directory does not exist\n");
 				}
 				break;
 			case SYSTEMC:
-				if(shell_flag) {
-					ret_var = system(input_copy);
-				} else {
+				if(!shell_flag) {
 					fprintf(stderr, "ERROR: No subshell detected, unable to execute given command\n");
+					break;
+				}
+				//fork and exec to create a new process to run the system command
+				pid_t pid = fork();
+
+				if(pid < 0) {
+					//the fork failed
+					fprintf(stderr, "ERROR: fork failed, process limit for cwushell reached see manual page of ulimit for a solution\n");
+					ret_var = 4;
+				} else if(pid == 0) {
+					//child process
+					execvp(parsed_input[0], parsed_input);
+					//if exec fails then this code will be reached and an error message will be printed
+					fprintf(stderr, "ERROR: exec failed\n");
+					ret_var = 5;
+				} else {
+					//pause parent while child is executing command. I am a lazy programmer so i am not going to worry about & input
+					int w;
+					wait(&w);
+					if(!WIFEXITED(w)) {
+						fprintf(stderr, "ERROR: fork/exec terminated abnormally\n");
+					}
 				}
 				break;
 				
