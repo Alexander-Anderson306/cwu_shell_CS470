@@ -1,4 +1,3 @@
-#include "cpuinfo.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -69,10 +68,10 @@ int main(int argc, char** argv) {
 		uint64_t freq;
 		size_t size = sizeof(freq);
 
-		if (sysctlbyname("hw.cpufrequency", &freq, &size, NULL, 0) == 0) {
+		if (sysctlbyname("sysctl hw.cpufrequency", &freq, &size, NULL, 0) == 0) {
 			printf("CPU Clock: %.2f GHz\n", freq / 1000000000.0);
 	    	} else {
-			fprintf(stderr, "ERROR: Unable to determine CPU clock.\n");
+			fprintf(stderr, "ERROR: Unable to determine CPU clock.\nNOTE: hw.cpufrequency deprocated on Apple silicon\n");
 	    	}
 	}
 
