@@ -82,10 +82,40 @@ int main() {
 				prompt(arg_count, parsed_input);
 				break;
 			case MEMINFOC:
+				//fork and exec and run cpuinfo bin
+				pid = fork();
+
+				if(pid < 0) {
+					//the fork failed
+					fprintf(stderr, "ERROR: fork failed, process limit for cwushell reached see manual page of ulimit for a solution\n");
+					ret_var = 4;
+				} else if(pid == 0) {
+					//child process
+					//ai helped with figuring out the path stuff
+					int len = snprintf(command_path, PATH_BUFFER, "%s/cwushell/bin/meminfo", getenv("HOME"));
+
+					if(len >= PATH_BUFFER) {
+						fprintf(stderr, "ERROR: File path too large. Size limit by default is is 512 bytes\n");
+						ret_var = 7;
+						break;
+					}
+
+					execv(command_path, parsed_input);
+					//if exec fails then this code will be reached and an error message will be printed
+					fprintf(stderr, "ERROR: exec failed\n");
+					ret_var = 5;
+				} else {
+					//pause parent while child is executing command. I am a lazy programmer so i am not going to worry about & input
+					int w;
+					wait(&w);
+					if(!WIFEXITED(w)) {
+						fprintf(stderr, "ERROR: fork/exec terminated abnormally\n");
+					}
+					ret_var = WEXITSTATUS(w);
+				}
 				break;
 			case CPUINFOC:
 				//fork and exec and run cpuinfo bin
-				
 				pid = fork();
 
 				if(pid < 0) {
@@ -114,6 +144,7 @@ int main() {
 					if(!WIFEXITED(w)) {
 						fprintf(stderr, "ERROR: fork/exec terminated abnormally\n");
 					}
+					ret_var = WEXITSTATUS(w);
 				}
 				break;
 			case CDC:
@@ -148,6 +179,7 @@ int main() {
 					if(!WIFEXITED(w)) {
 						fprintf(stderr, "ERROR: fork/exec terminated abnormally\n");
 					}
+					ret_var = WEXITSTATUS(w);
 				}
 				break;
 				
@@ -176,7 +208,7 @@ Command input_map(char* input) {
 	if(strcmp(input, "exit") == 0) return EXITC;
 	if(strcmp(input, "prompt") == 0) return PROMPTC;
 	if(strcmp(input, "cpuinfo") == 0) return CPUINFOC;
-	if(strcmp(input, "meminfo") == 0) return CPUINFOC;
+	if(strcmp(input, "meminfo") == 0) return MEMINFOC;
 	if(strcmp(input, "cd") == 0) return CDC;
 
 	//if we cant match the command, pass it to system and let the native shell handle it
