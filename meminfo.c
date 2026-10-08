@@ -44,7 +44,12 @@ int main(int argc, char** argv) {
             		break;
     	}
 
-    	if (unknown_flag) {
+	if(optind < argc){
+		fprintf(stderr, "ERROR: Unknown argument or command entered\nmeminfo does not expect any argument\n");
+		return 3;
+	}
+
+    	if(unknown_flag) {
 		fprintf(stderr, "ERROR: Unknown option entered\nExpected format meminfo [-t | -u | -c | -h]\n");
         	return 1;
 	}
@@ -70,7 +75,7 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 
-	if (t_flag){
+	if(t_flag){
 		uint64_t memory;
 		size_t size = sizeof(memory);
 
@@ -82,7 +87,7 @@ int main(int argc, char** argv) {
 	}
 
     //the u flag code was generated using AI
-	if (u_flag){
+	if(u_flag){
 	    vm_statistics64_data_t vm_stats;
 	    mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
 	    vm_size_t page_size;
@@ -107,7 +112,7 @@ int main(int argc, char** argv) {
 	    }
 	}
 
-	if (c_flag){
+	if(c_flag){
 		uint64_t cache;
 		size_t size = sizeof(cache);
 

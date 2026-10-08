@@ -30,6 +30,8 @@ int main() {
 	char* ret_tok = input_buff; 
 	Command command;
 	pid_t pid;
+	char valid_input = 0;
+	int num_read_bytes;
 
 	//setting current path and prompt
 	//loop exits when user enters exit command
@@ -51,7 +53,17 @@ int main() {
 		}
 		input_buff[INPUT_BUFFER_SIZE-1] = '\0';
 
-		
+		//make sure user does not enter only the delimiters like a fool
+		for(int i = 0; i < INPUT_BUFFER_SIZE; i++) {
+			if(input_buff[i] != ' ' && input_buff[i] != '\n' && input_buff[i] != '\t' && input_buff[i] != '\r' && input_buff[i] != '\0') {
+				valid_input = 1;
+				break;
+			}
+		}
+
+		if(valid_input == 0){
+			continue;
+		}
 		//combe through input
 		char* tok = strtok(input_buff, DELIMITERS);
 		while(tok != NULL && arg_count < MAX_ARGS-1) {
@@ -170,8 +182,8 @@ int main() {
 					//child process
 					execvp(parsed_input[0], parsed_input);
 					//if exec fails then this code will be reached and an error message will be printed
-					fprintf(stderr, "ERROR: exec failed\n");
-					ret_var = 5;
+					fprintf(stderr, "ERROR: exec failed\nCheck entered command for typo...\n");
+					return 8;
 				} else {
 					//pause parent while child is executing command. I am a lazy programmer so i am not going to worry about & input
 					int w;

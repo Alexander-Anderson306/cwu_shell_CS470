@@ -42,9 +42,14 @@ int main(int argc, char** argv) {
             	break;
     	}
 
-    	if (unknown_flag) {
+    	if(unknown_flag) {
 		fprintf(stderr, "ERROR: Unknown option entered\nExpected format cpuinfo [-c | -t | -n | -h]\n");
         	return 1;
+	}
+
+	if(optind < argc) {
+		fprintf(stderr, "ERROR: Unknown argument or flag entered\nmeminfo does not expect any argument\n");
+		return 3;
 	}
 
 	if(h_flag) {
@@ -68,7 +73,7 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 
-	if (c_flag){
+	if(c_flag){
 		uint64_t freq;
 		size_t size = sizeof(freq);
 
@@ -79,7 +84,7 @@ int main(int argc, char** argv) {
 	    	}
 	}
 
-	if (t_flag){
+	if(t_flag){
 		char cpu[256];
 	    	size_t size = sizeof(cpu);
 
@@ -90,7 +95,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if (n_flag){
+	if(n_flag){
 		int cores;
 		size_t size = sizeof(cores);
 
